@@ -1,0 +1,15 @@
+{
+    "servers": {
+        "mcp-feedback-enhanced": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--python", "3.11",
+        "--with", "starlette==0.46.2",
+        "mcp-feedback-enhanced@latest"
+      ],
+      "env": {},
+      "timeout": 1200
+    },
+    }
+}
