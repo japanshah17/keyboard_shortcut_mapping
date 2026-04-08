@@ -1,3 +1,7 @@
+## 0.0.2
+* Add Windows support for keyboard shortcut mapping plugin
+
+
 ## 0.0.1
 
 * Initial release of keyboard_shortcut_mapping plugin
