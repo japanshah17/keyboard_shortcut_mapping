@@ -119,8 +119,10 @@ void initState() {
 }
 ```
 ## Screenshots
-<img width="350" height="720" alt="image" src="https://github.com/user-attachments/assets/e0fa6194-8b23-4951-ab74-3e6658c60f0e" />
-<img width="350" height="720" alt="image" src="https://github.com/user-attachments/assets/42ce249c-8727-4041-b124-4279955089d2" />
+
+<img width="350" height="720" alt="image 1" src="https://github.com/user-attachments/assets/7757afc9-d370-4dd1-9418-c0b600a3ef06" />
+<img width="350" height="720" alt="image 2" src="https://github.com/user-attachments/assets/6f94895e-76ba-48c6-a742-4994c7709b52" />
+
 
 ## Contributing & Support
 

@@ -1,3 +1,8 @@
+## 0.0.2
+
+* Fix: Shortened package description for pub.dev compliance
+* Fix: Added issue_tracker URL to pubspec.yaml
+
 ## 0.0.1
 
 * Initial release of keyboard_shortcut_mapping plugin
