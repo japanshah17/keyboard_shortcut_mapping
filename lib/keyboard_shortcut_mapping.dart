@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'keyboard_shortcut_mapping_platform_interface.dart';
 
 /// Typedef for keyboard shortcut callback functions.
 /// These are async functions that execute when a shortcut is triggered.
@@ -85,6 +86,11 @@ class KeyboardShortcutMapping {
 
   /// Storage key for shortcuts in SharedPreferences
   static const String _storageKey = 'keyboard_shortcuts';
+
+  /// Get the platform version.
+  Future<String?> getPlatformVersion() {
+    return KeyboardShortcutMappingPlatform.instance.getPlatformVersion();
+  }
 
   /// Register a keyboard shortcut.
   /// Shortcut data is automatically saved to SharedPreferences.

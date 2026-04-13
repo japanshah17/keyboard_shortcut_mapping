@@ -14,7 +14,9 @@ A powerful Flutter plugin for managing keyboard shortcuts with persistent storag
 
 ## Platform Support
 
-- ✅ **macOS** (Primary support)
+- ✅ **macOS** (Full support)
+- ✅ **Windows** (Full support)
+- ✅ **Linux** (Full support)
 
 ## Installation
 

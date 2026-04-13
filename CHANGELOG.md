@@ -1,3 +1,8 @@
+## 0.0.3
+
+* Feature: Added Windows platform support
+* Feature: Added Linux platform support
+
 ## 0.0.2
 
 * Fix: Shortened package description for pub.dev compliance

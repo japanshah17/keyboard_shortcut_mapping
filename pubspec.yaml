@@ -39,6 +39,8 @@ flutter:
     platforms:
       macos:
         pluginClass: KeyboardShortcutMappingPlugin
+      linux:
+        pluginClass: KeyboardShortcutMappingPlugin
 
   # To add assets to your plugin package, add an assets section, like this:
   # assets:
