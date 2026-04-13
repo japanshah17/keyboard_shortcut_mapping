@@ -1,3 +1,10 @@
+## 0.0.3
+
+* Feature: Added Windows platform support
+* Feature: Added Linux platform support
+* Feat: Platform registration for Windows and Linux in pubspec.yaml
+* Improvement: Extended keyboard shortcut management to Windows and Linux devices
+
 ## 0.0.2
 
 * Fix: Shortened package description for pub.dev compliance

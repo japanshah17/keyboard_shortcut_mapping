@@ -14,7 +14,9 @@ A powerful Flutter plugin for managing keyboard shortcuts with persistent storag
 
 ## Platform Support
 
-- ✅ **macOS** (Primary support)
+- ✅ **macOS** (Full support)
+- ✅ **Windows** (Full support)
+- ✅ **Linux** (Full support)
 
 ## Installation
 
@@ -22,7 +24,7 @@ Add `keyboard_shortcut_mapping` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  keyboard_shortcut_mapping: ^0.0.1
+  keyboard_shortcut_mapping: ^0.0.3
 ```
 
 Then run:
