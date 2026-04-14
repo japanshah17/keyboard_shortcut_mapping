@@ -39,6 +39,8 @@ flutter:
     platforms:
       macos:
         pluginClass: KeyboardShortcutMappingPlugin
+      windows:
+        pluginClass: KeyboardShortcutMappingPluginCApi
       linux:
         pluginClass: KeyboardShortcutMappingPlugin
 
