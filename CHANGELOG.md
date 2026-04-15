@@ -1,4 +1,4 @@
-## 0.0.3
+## 1.0.0
 
 * Feature: Added Windows platform support
 * Feature: Added Linux platform support
