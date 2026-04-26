@@ -6,15 +6,15 @@ void main() {
 
   group('KeyboardShortcutMapping', () {
     setUp(() async {
-      await KeyboardShortcutMapping.unregisterAll();
+      KeyboardShortcutMapping.unregisterAll();
     });
 
     tearDown(() async {
-      await KeyboardShortcutMapping.unregisterAll();
+      KeyboardShortcutMapping.unregisterAll();
     });
 
     test('register and retrieve shortcuts', () async {
-      await KeyboardShortcutMapping.register(
+      KeyboardShortcutMapping.register(
         modifiers: ['cmd'],
         key: 's',
         callback: () async {},
@@ -28,14 +28,14 @@ void main() {
     });
 
     test('unregister shortcut', () async {
-      await KeyboardShortcutMapping.register(
+      KeyboardShortcutMapping.register(
         modifiers: ['cmd'],
         key: 's',
         callback: () async {},
         id: 'test_save',
       );
 
-      await KeyboardShortcutMapping.unregister('test_save');
+      KeyboardShortcutMapping.unregister('test_save');
       final shortcuts = KeyboardShortcutMapping.getShortcuts();
       expect(shortcuts.containsKey('test_save'), false);
     });
@@ -43,7 +43,7 @@ void main() {
     test('handle key event executes callback', () async {
       bool callbackExecuted = false;
 
-      await KeyboardShortcutMapping.register(
+      KeyboardShortcutMapping.register(
         modifiers: ['cmd'],
         key: 's',
         callback: () async {
@@ -52,26 +52,26 @@ void main() {
         id: 'test_save',
       );
 
-      await KeyboardShortcutMapping.handleKeyEvent(['cmd'], 's');
+      KeyboardShortcutMapping.handleKeyEvent(['cmd'], 's');
       expect(callbackExecuted, true);
     });
 
     test('unregisterAll clears all shortcuts', () async {
-      await KeyboardShortcutMapping.register(
+      KeyboardShortcutMapping.register(
         modifiers: ['cmd'],
         key: 's',
         callback: () async {},
         id: 'test_save',
       );
 
-      await KeyboardShortcutMapping.register(
+      KeyboardShortcutMapping.register(
         modifiers: ['cmd'],
         key: 'q',
         callback: () async {},
         id: 'test_quit',
       );
 
-      await KeyboardShortcutMapping.unregisterAll();
+      KeyboardShortcutMapping.unregisterAll();
       final shortcuts = KeyboardShortcutMapping.getShortcuts();
       expect(shortcuts.isEmpty, true);
     });
