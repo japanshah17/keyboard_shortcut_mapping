@@ -1,3 +1,10 @@
+## 2.0.0
+
+* Refactor: Removed `shared_preferences` dependency from the package
+* Refactor: `register`, `unregister`, `unregisterAll`, `registerCallback`, and `dispose` are now synchronous
+* Removed: `initialize()` method — persistence is now the caller's responsibility
+* Updated example app with a `_ShortcutStorage` helper demonstrating SharedPreferences-based persistence
+
 ## 1.0.0
 
 * Feature: Added Windows platform support

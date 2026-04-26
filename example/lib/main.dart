@@ -1,12 +1,53 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:keyboard_shortcut_mapping/keyboard_shortcut_mapping.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// ---------------------------------------------------------------------------
+// Persistence helper — caller-owned. Stores shortcut config (modifiers + key)
+// in SharedPreferences. Callbacks cannot be serialized; they are re-attached
+// in initState via _restoreShortcutCallbacks().
+// ---------------------------------------------------------------------------
+class _ShortcutStorage {
+  static const _key = 'keyboard_shortcuts';
+
+  static Future<Map<String, Map<String, dynamic>>> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final json = prefs.getString(_key);
+    if (json == null) return {};
+    final raw = jsonDecode(json) as Map<String, dynamic>;
+    return raw.map((k, v) => MapEntry(k, Map<String, dynamic>.from(v as Map)));
+  }
+
+  static Future<void> save(Map<String, KeyboardShortcut> shortcuts) async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = shortcuts.map(
+      (id, s) => MapEntry(id, {'modifiers': s.modifiers, 'key': s.key}),
+    );
+    await prefs.setString(_key, jsonEncode(data));
+  }
+
+  static Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ⚙️ REQUIRED: Initialize keyboard shortcuts on app startup
-  await KeyboardShortcutMapping.initialize();
+  // Load persisted shortcut config and populate the package's in-memory state.
+  // Real callbacks are re-attached in the page's initState.
+  final saved = await _ShortcutStorage.load();
+  for (final entry in saved.entries) {
+    KeyboardShortcutMapping.register(
+      id: entry.key,
+      modifiers: List<String>.from(entry.value['modifiers'] as List),
+      key: entry.value['key'] as String,
+      callback: () async {},
+    );
+  }
 
   runApp(const KeyboardShortcutMappingExampleApp());
 }
@@ -233,63 +274,30 @@ class _KeyboardShortcutMappingExamplePageState
     });
   }
 
-  /// 💾 IMPORTANT: Restore callbacks for persisted shortcuts
-  /// This ensures shortcuts saved from a previous session work again
-  Future<void> _restoreShortcutCallbacks() async {
-    final shortcuts = KeyboardShortcutMapping.getShortcuts();
-    debugPrint('🔍 Found ${shortcuts.length} saved shortcuts to restore');
-
-    for (final entry in shortcuts.entries) {
+  /// Attach real callbacks to shortcuts loaded from storage in main().
+  void _restoreShortcutCallbacks() {
+    for (final entry in KeyboardShortcutMapping.getShortcuts().entries) {
       final id = entry.key;
-      debugPrint('   - Restoring: $id');
-
-      // Re-register the callback for this shortcut
-      // Determine which action this shortcut belongs to based on ID pattern
       if (id.startsWith('actionOne')) {
-        await KeyboardShortcutMapping.registerCallback(
-          id: id,
-          callback: _actionOne,
-        );
+        KeyboardShortcutMapping.registerCallback(id: id, callback: _actionOne);
         _registeredShortcutIds.add(id);
       } else if (id.startsWith('actionTwo')) {
-        await KeyboardShortcutMapping.registerCallback(
-          id: id,
-          callback: _actionTwo,
-        );
+        KeyboardShortcutMapping.registerCallback(id: id, callback: _actionTwo);
         _registeredShortcutIds.add(id);
       } else if (id.startsWith('actionThree')) {
-        await KeyboardShortcutMapping.registerCallback(
-          id: id,
-          callback: _actionThree,
-        );
+        KeyboardShortcutMapping.registerCallback(
+            id: id, callback: _actionThree);
         _registeredShortcutIds.add(id);
       }
     }
-
-    if (shortcuts.isEmpty) {
-      debugPrint(' (No saved shortcuts found)');
-    }
-    setState(() {});
+    if (_registeredShortcutIds.isNotEmpty) setState(() {});
   }
 
   /// 🔧 CUSTOMIZE: Replace with your own action logic
-  /// These methods run when the shortcut is pressed
-  Future<void> _actionOne() async {
-    _updateAction('Action One Triggered!');
-  }
+  Future<void> _actionOne() async => _updateAction('Action One Triggered!');
+  Future<void> _actionTwo() async => _updateAction('Action Two Triggered!');
+  Future<void> _actionThree() async => _updateAction('Action Three Triggered!');
 
-  /// 🔧 CUSTOMIZE: Replace with your own action logic
-  Future<void> _actionTwo() async {
-    _updateAction('Action Two Triggered!');
-  }
-
-  /// 🔧 CUSTOMIZE: Replace with your own action logic
-  Future<void> _actionThree() async {
-    _updateAction('Action Three Triggered!');
-  }
-
-  /// Maps ActionType to callback function
-  /// 🔧 UPDATE: Add matching case for each new action
   ShortcutCallback _getCallbackForAction(ActionType action) {
     switch (action) {
       case ActionType.actionOne:
@@ -302,9 +310,7 @@ class _KeyboardShortcutMappingExamplePageState
   }
 
   Future<void> _startListeningForKeys(ActionType action) async {
-    setState(() {
-      _isListeningForKeys = true;
-    });
+    setState(() => _isListeningForKeys = true);
 
     if (!mounted) return;
 
@@ -319,64 +325,48 @@ class _KeyboardShortcutMappingExamplePageState
       ),
     );
 
-    // Re-request focus after dialog closes
     if (mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _pageFocusNode.requestFocus();
-      });
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _pageFocusNode.requestFocus());
     }
   }
 
-  /// Register a new shortcut using KeyboardShortcutMapping.register()
-  ///
-  /// 📌 PACKAGE USAGE:
-  /// - modifiers: List of keys pressed (cmd, shift, alt, ctrl)
-  /// - key: Main key pressed (a-z, 0-9, F1-F12, Return, space, etc.)
-  /// - callback: Function to call when shortcut is pressed
-  /// - id: Unique identifier for this shortcut
   Future<void> _registerShortcutForAction(
     ActionType action,
     List<String> modifiers,
     String key,
   ) async {
     try {
-      // Create unique ID for this shortcut
-      final shortcutId = '${action.name}_${modifiers.join('_')}_$key';
+      final id = '${action.name}_${modifiers.join('_')}_$key';
 
-      // 🎯 PACKAGE API: Register the shortcut
-      await KeyboardShortcutMapping.register(
-        modifiers: modifiers, // e.g., ['cmd', 'shift']
-        key: key, // e.g., 's'
-        callback: _getCallbackForAction(action), // Function to execute
-        id: shortcutId, // Unique identifier
+      // Register in the package (in-memory)
+      KeyboardShortcutMapping.register(
+        modifiers: modifiers,
+        key: key,
+        callback: _getCallbackForAction(action),
+        id: id,
       );
 
-      _registeredShortcutIds.add(shortcutId);
+      // Persist to SharedPreferences
+      await _ShortcutStorage.save(KeyboardShortcutMapping.getShortcuts());
 
-      final shortcutDisplay =
+      _registeredShortcutIds.add(id);
+      final display =
           '${modifiers.map((m) => m.toUpperCase()).join('+')}+${key.toUpperCase()}';
-      _updateAction('Registered ${action.displayName} to $shortcutDisplay');
-
-      setState(() {
-        _isListeningForKeys = false;
-      });
+      _updateAction('Registered ${action.displayName} to $display');
+      setState(() => _isListeningForKeys = false);
     } on Exception catch (e) {
       _updateAction('Error registering shortcut: $e');
-      setState(() {
-        _isListeningForKeys = false;
-      });
+      setState(() => _isListeningForKeys = false);
     }
   }
 
-  void _updateAction(String action) {
-    setState(() {
-      _lastAction = action;
-    });
-  }
+  void _updateAction(String action) => setState(() => _lastAction = action);
 
   Future<void> _unregisterShortcut(String id) async {
     try {
-      await KeyboardShortcutMapping.unregister(id);
+      KeyboardShortcutMapping.unregister(id);
+      await _ShortcutStorage.save(KeyboardShortcutMapping.getShortcuts());
       _registeredShortcutIds.remove(id);
       setState(() {});
       _updateAction('Unregistered $id');
@@ -387,7 +377,8 @@ class _KeyboardShortcutMappingExamplePageState
 
   Future<void> _unregisterAll() async {
     try {
-      await KeyboardShortcutMapping.unregisterAll();
+      KeyboardShortcutMapping.unregisterAll();
+      await _ShortcutStorage.clear();
       _registeredShortcutIds.clear();
       setState(() {});
       _updateAction('All shortcuts unregistered');
@@ -396,28 +387,16 @@ class _KeyboardShortcutMappingExamplePageState
     }
   }
 
-  /// 🎹 Handle keyboard events when keys are pressed
-  /// This is called by KeyboardListener widget whenever a key is pressed
-  ///
-  /// How it works:
-  /// 1. Detect all modifier keys (cmd, shift, alt, ctrl)
-  /// 2. Get the main key that was pressed
-  /// 3. Call KeyboardShortcutMapping.handleKeyEvent() to check shortcuts
-  /// 4. If a match is found, the shortcut's callback is executed
   Future<void> _handlePageKeyEvent(KeyEvent event) async {
     if (event is KeyDownEvent && !_isListeningForKeys) {
       List<String> modifiers = [];
-
-      // 📋 Step 1: Detect modifier keys
       if (HardwareKeyboard.instance.isMetaPressed) modifiers.add('cmd');
       if (HardwareKeyboard.instance.isShiftPressed) modifiers.add('shift');
       if (HardwareKeyboard.instance.isAltPressed) modifiers.add('alt');
       if (HardwareKeyboard.instance.isControlPressed) modifiers.add('ctrl');
 
-      // 📋 Step 2: Get the main key
-      String? key = _getKeyLabel(event.logicalKey);
+      final key = _getKeyLabel(event.logicalKey);
       if (key != null && key.isNotEmpty) {
-        // 🎯 PACKAGE API: Process shortcut
         await KeyboardShortcutMapping.handleKeyEvent(modifiers, key);
       }
     }
@@ -426,7 +405,6 @@ class _KeyboardShortcutMappingExamplePageState
   @override
   void dispose() {
     _pageFocusNode.dispose();
-    KeyboardShortcutMapping.dispose();
     super.dispose();
   }
 
@@ -575,17 +553,12 @@ class _KeyboardShortcutMappingExamplePageState
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.grey[300]!),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _lastAction,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            _lastAction,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],

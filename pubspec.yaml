@@ -1,5 +1,5 @@
 name: keyboard_shortcut_mapping
-description: A Flutter plugin for managing keyboard shortcuts with persistent storage.
+description: A Flutter plugin for managing keyboard shortcuts.
 version: 1.0.0
 homepage: https://github.com/japanshah17/keyboard_shortcut_mapping
 repository: https://github.com/japanshah17/keyboard_shortcut_mapping
@@ -13,7 +13,6 @@ dependencies:
   flutter:
     sdk: flutter
   plugin_platform_interface: ^2.0.2
-  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
